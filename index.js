@@ -18,6 +18,7 @@ mongoose.connect('mongodb://admin:7cc5cbe8-289a-458b-9373-f79940b42562@ds016718.
 
 
 var Balance     = require('./app/models/balance');
+var Transaction     = require('./app/models/transaction');
 
 // ROUTES FOR OUR API
 // =============================================================================
@@ -57,13 +58,47 @@ router.route('/balance').post(function(req, res) {
 
     });
 
-router.route('/balance').get(function(req, res) {
-        Balance.findOne({}, {}, { sort: { 'date' : -1 } }, function(err, post) {
-          console.log( post );
-            res.json(post);
-            
+router.route('/transaction').post(function(req, res) {
+    var transaction = new Transaction();
+    transaction.amount = req.body.amount;
+    transaction.date = Date.now();
+    transaction.user = req.body.user;
+    transaction.save(function(err) {
+        if (err)
+            res.send(err);
+            Balance.findOne({}, {}, { sort: { 'date' : -1 } }, function(err, post) {
+            console.log( post );
+            var balance = new Balance();
+            balance.amount = (post.amount - req.body.amount);
+            balance.date = Date.now();
+
+            // save the bear and check for errors
+            balance.save(function(err) {
+                if (err)
+                    res.send(err);
+
+                res.json({ message: 'Balance created!' });
+            });
         });
     });
+});
+
+router.route('/balance').get(function(req, res) {
+    Balance.findOne({}, {}, { sort: { 'date' : -1 } }, function(err, post) {
+      console.log( post );
+        res.json(post);
+
+    });
+});
+
+
+router.route('/transaction').get(function(req, res) {
+    Transaction.find({}, {}, { sort: { 'date' : -1 } }, function(err, post) {
+      console.log( post );
+        res.json(post);
+
+    });
+});
 
 // REGISTER OUR ROUTES -------------------------------
 // all of our routes will be prefixed with /api
