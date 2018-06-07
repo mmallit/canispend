@@ -59,17 +59,21 @@ router.route('/balance').post(function(req, res) {
     });
 
 router.route('/transaction').post(function(req, res) {
-    var transaction = new Transaction();
-    transaction.amount = req.body.amount;
-    transaction.date = Date.now();
-    transaction.user = req.body.user;
-    transaction.save(function(err) {
-        if (err)
-            res.send(err);
-            Balance.findOne({}, {}, { sort: { 'date' : -1 } }, function(err, post) {
-            console.log( post );
+    Balance.findOne({}, {}, { sort: { 'date' : -1 } }, function(err, post) {
+        console.log( post );
+        var newBalance = post.amount - req.body.amount;
+        var transaction = new Transaction();
+        transaction.amount = req.body.amount;
+        transaction.date = Date.now();
+        transaction.user = req.body.user;
+        transaction.category = req.body.category;
+        transaction.newbalance = newBalance
+        transaction.save(function(err) {
+            if (err)
+                res.send(err);
+
             var balance = new Balance();
-            balance.amount = (post.amount - req.body.amount);
+            balance.amount = newBalance;
             balance.date = Date.now();
 
             // save the bear and check for errors
